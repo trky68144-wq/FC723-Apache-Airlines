@@ -410,3 +410,99 @@ def show_all_bookings(conn):
     for row in rows:
         ref, passport, first, last, seat_row, seat_col = row
         print(f"  {ref:<10} {passport:<12} {first:<12} {last:<12} {seat_row}{seat_col}")
+        
+        
+        
+
+def main_menu():
+    # This is the main function that runs the whole program
+    # It asks the user to choose Part A or Part B
+    # then keeps showing the menu until the user exits
+
+    print("\n" + "=" * 55)
+    print("  Apache Airlines — Burak757 Booking System")
+    print("=" * 55)
+    print("\n  Select mode:")
+    print("  1. Part A (basic booking — stores R)")
+    print("  2. Part B (full system — booking refs + database)")
+    print()
+
+    # Keep asking until a valid mode is chosen
+    while True:
+        mode = input("  Enter 1 or 2: ").strip()
+        if mode in ("1", "2"):
+            break
+        print("  Please enter 1 or 2.")
+
+    # Set up the database only if Part B is selected
+    conn = None
+    if mode == "2":
+        # Connect to the SQLite database file (creates it if it does not exist)
+        conn = sqlite3.connect("apache_bookings.db")
+        setup_database(conn)
+
+    # Create the initial seat map
+    seat_map = create_seat_map()
+
+    print(f"\n  Running in {'Part A' if mode == '1' else 'Part B'} mode.")
+
+    # Keep showing the menu until the user exits
+    while True:
+
+        # Show the menu options
+        print("\n  --- Main Menu ---")
+        print("  1. Check availability of seat")
+        print("  2. Book a seat")
+        print("  3. Free a seat")
+        print("  4. Show booking status")
+        print("  5. Show all available seats")
+
+        # Show the Part B option only when running in Part B mode
+        if mode == "2":
+            print("  6. Show all bookings (database)")
+            print("  7. Exit program")
+        else:
+            print("  6. Exit program")
+        print()
+
+        # Get the user's choice
+        choice = input("  Enter your choice: ").strip()
+
+        # Call the correct function based on the choice
+        if choice == "1":
+            check_availability(seat_map)
+
+        elif choice == "2":
+            # Pass conn so Part B can save to the database
+            book_seat(seat_map, conn)
+
+        elif choice == "3":
+            # Pass conn so Part B can delete from the database
+            free_seat(seat_map, conn)
+
+        elif choice == "4":
+            show_booking_status(seat_map)
+
+        elif choice == "5":
+            show_available_seats(seat_map)
+
+        elif choice == "6" and mode == "2":
+            # Part B only: show all database records
+            show_all_bookings(conn)
+
+        elif (choice == "6" and mode == "1") or (choice == "7" and mode == "2"):
+            # Exit the program
+            if conn:
+                # Close the database connection before exiting
+                conn.close()
+            print("\n  Thank you for using Apache Airlines. Goodbye!\n")
+            break
+
+        else:
+            # The user entered an invalid option
+            print("  Invalid choice. Please try again.")
+
+
+# This runs the main menu when the file is executed directly
+if __name__ == "__main__":
+    main_menu()
