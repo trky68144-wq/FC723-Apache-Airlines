@@ -347,3 +347,66 @@ def show_booking_status(seat_map):
     # Print the summary
     print("  " + "-" * 62)
     print(f"  Free: {total_free}   Reserved: {total_reserved}")
+    
+    
+    
+def show_available_seats(seat_map):
+    # This is an additional feature common in real airline systems
+    # It lists all free seats so the user does not have to check each one
+
+    print("\n  All currently available seats:")
+    print("  " + "-" * 50)
+
+    # Collect all free seats into a list
+    available = []
+
+    for col in range(7):
+        col_label = INDEX_TO_COL[col]
+
+        # Skip the aisle column
+        if col_label == "X":
+            continue
+
+        for row in range(80):
+            # Add the seat to the list if it is free
+            if seat_map[col][row] == "F":
+                available.append(f"{row + 1}{col_label}")
+
+    # Print the free seats in groups of 10 per line
+    for i in range(0, len(available), 10):
+        print("  " + "  ".join(available[i:i+10]))
+
+    # Print the total count
+    print(f"\n  Total available seats: {len(available)}")
+
+
+# ============================================================
+# MENU FUNCTIONALITY 6: VIEW ALL BOOKINGS — Part B only
+# ============================================================
+
+def show_all_bookings(conn):
+    # This function reads all booking records from the database
+    # and prints them in a formatted table
+
+    # Get a cursor to run the query
+    cursor = conn.cursor()
+
+    # Get all rows from the bookings table sorted by seat position
+    cursor.execute("SELECT * FROM bookings ORDER BY seat_row, seat_column")
+    rows = cursor.fetchall()
+
+    # If no bookings exist yet, say so and stop
+    if not rows:
+        print("\n  No bookings found in the database.")
+        return
+
+    # Print the table header
+    print("\n  All Bookings:")
+    print("  " + "-" * 70)
+    print(f"  {'Ref':<10} {'Passport':<12} {'First':<12} {'Last':<12} {'Seat'}")
+    print("  " + "-" * 70)
+
+    # Print each booking as a row in the table
+    for row in rows:
+        ref, passport, first, last, seat_row, seat_col = row
+        print(f"  {ref:<10} {passport:<12} {first:<12} {last:<12} {seat_row}{seat_col}")
