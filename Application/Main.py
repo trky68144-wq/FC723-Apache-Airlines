@@ -13,3 +13,28 @@ import string
  
 # Import sqlite3 to create and use a local database for passenger details
 import sqlite3
+
+
+
+def setup_database(conn):
+    # This function creates the bookings table in the database
+    # It only creates the table if it does not already exist
+ 
+    # Get a cursor to run SQL commands
+    cursor = conn.cursor()
+ 
+    # Create the bookings table with all required columns
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS bookings (
+            booking_ref   TEXT PRIMARY KEY,
+            passport_no   TEXT NOT NULL,
+            first_name    TEXT NOT NULL,
+            last_name     TEXT NOT NULL,
+            seat_row      INTEGER NOT NULL,
+            seat_column   TEXT NOT NULL
+        )
+    """)
+ 
+    # Save the changes to the database
+    conn.commit()
+    print("  Database ready.")
