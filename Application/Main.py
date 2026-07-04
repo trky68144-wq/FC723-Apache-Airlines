@@ -38,3 +38,35 @@ def setup_database(conn):
     # Save the changes to the database
     conn.commit()
     print("  Database ready.")
+    
+    
+
+def generate_booking_ref(conn):
+    # This function creates a unique 8-character booking reference
+    # 1. Build a pool: A-Z and 0-9 (36 characters)
+    # 2. Pick 8 random characters
+    # 3. Check the database — if unique, return it
+    # 4. If not unique, try again
+
+    # Get a cursor to run database queries
+    cursor = conn.cursor()
+
+    # Build the pool of characters: uppercase letters and digits
+    characters = string.ascii_uppercase + string.digits
+
+    # Keep trying until a unique reference is found
+    while True:
+
+        # Pick 8 random characters and join them into one string
+        ref = "".join(random.choices(characters, k=8))
+
+        # Check if this reference already exists in the database
+        cursor.execute(
+            "SELECT COUNT(*) FROM bookings WHERE booking_ref = ?", (ref,)
+        )
+
+        # If count is 0 the reference is unique — return it
+        if cursor.fetchone()[0] == 0:
+            return ref
+
+        # If count is not 0 the reference already exists — loop again
