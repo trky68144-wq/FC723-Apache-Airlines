@@ -150,3 +150,108 @@ def parse_seat(seat_input):
 
     # Convert to 0-based indexes and return them
     return row_num - 1, COL_TO_INDEX[col_letter]
+
+
+def check_availability(seat_map):
+    # This function checks the status of a specific seat
+    # and prints whether it is free, reserved, an aisle, or storage
+
+    # Ask the user for a seat identifier
+    seat_input = input("\n  Enter seat (e.g. 5A, 12D): ").strip()
+
+    # Convert the input to row and column indexes
+    row_index, col_index = parse_seat(seat_input)
+
+    # Stop here if the input was invalid
+    if row_index is None:
+        return
+
+    # Get the current value stored in that seat
+    status = seat_map[col_index][row_index]
+
+    # Build a readable seat label like "5A"
+    seat_label = f"{row_index + 1}{INDEX_TO_COL[col_index]}"
+
+    # Print the correct message based on the seat status
+    if status == "F":
+        print(f"  Seat {seat_label} is AVAILABLE.")
+    elif status == "X":
+        print(f"  {seat_label} is an aisle — cannot be booked.")
+    elif status == "S":
+        print(f"  {seat_label} is a storage area — cannot be booked.")
+    else:
+        # Any other value is a booking reference (Part B) or R (Part A)
+        print(f"  Seat {seat_label} is RESERVED (Ref: {status}).")
+
+
+
+def book_seat(seat_map, conn=None):
+    # This function books a free seat
+    # conn is None in Part A and a database connection in Part B
+
+    # Ask the user which seat to book
+    seat_input = input("\n  Enter seat to book (e.g. 5A, 12D): ").strip()
+
+    # Convert the input to row and column indexes
+    row_index, col_index = parse_seat(seat_input)
+
+    # Stop here if the input was invalid
+    if row_index is None:
+        return
+
+    # Get the current status of that seat
+    status = seat_map[col_index][row_index]
+
+    # Build a readable seat label
+    seat_label = f"{row_index + 1}{INDEX_TO_COL[col_index]}"
+
+    # Check the seat can actually be booked
+    if status != "F":
+        if status == "X":
+            print(f"  Cannot book {seat_label} — this is an aisle.")
+        elif status == "S":
+            print(f"  Cannot book {seat_label} — this is a storage area.")
+        else:
+            # The seat already has a booking
+            print(f"  Seat {seat_label} is already reserved (Ref: {status}).")
+        return
+
+    if conn is None:
+        # Part A: just store "R" in the seat map to mark it as reserved
+        seat_map[col_index][row_index] = "R"
+        print(f"  Seat {seat_label} has been successfully booked.")
+
+    else:
+        # Part B: collect passenger details before booking
+        print(f"\n  Booking seat {seat_label}. Please enter passenger details:")
+        passport_no = input("  Passport number: ").strip()
+        first_name  = input("  First name: ").strip()
+        last_name   = input("  Last name: ").strip()
+
+        # Make sure none of the fields are empty
+        if not passport_no or not first_name or not last_name:
+            print("  Booking cancelled — all fields are required.")
+            return
+
+        # Generate a unique 8-character booking reference
+        ref = generate_booking_ref(conn)
+
+        # Store the booking reference in the seat map instead of "R"
+        seat_map[col_index][row_index] = ref
+
+        # Save the passenger details to the database
+        cursor = conn.cursor()
+        cursor.execute("""
+            INSERT INTO bookings
+            (booking_ref, passport_no, first_name, last_name, seat_row, seat_column)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (ref, passport_no, first_name, last_name, row_index + 1, INDEX_TO_COL[col_index]))
+
+        # Save the changes permanently
+        conn.commit()
+
+        # Confirm the booking to the user
+        print(f"\n  Booking confirmed!")
+        print(f"  Seat: {seat_label}")
+        print(f"  Booking Reference: {ref}")
+        print(f"  Passenger: {first_name} {last_name}")
