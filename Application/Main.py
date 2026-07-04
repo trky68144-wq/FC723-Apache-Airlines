@@ -115,3 +115,38 @@ COL_TO_INDEX = {"A": 0, "B": 1, "C": 2, "X": 3, "D": 4, "E": 5, "F": 6}
 
 # Dictionary to convert an index back to its column letter
 INDEX_TO_COL = {v: k for k, v in COL_TO_INDEX.items()}
+
+
+def parse_seat(seat_input):
+    # This function converts a seat input like "5A" into (row_index, col_index)
+    # Returns (None, None) if the input is invalid
+
+    # Remove extra spaces and convert to uppercase
+    seat_input = seat_input.strip().upper()
+
+    # The last character is the column letter
+    col_letter = seat_input[-1]
+
+    # Everything before the last character is the row number
+    row_str = seat_input[:-1]
+
+    # Check the column letter is valid and not the aisle
+    if col_letter not in COL_TO_INDEX or col_letter == "X":
+        print(f"  Invalid column '{col_letter}'. Valid columns: A, B, C, D, E, F")
+        return None, None
+
+    # Try to convert the row part to a number
+    try:
+        row_num = int(row_str)
+    except ValueError:
+        # If it is not a number, show an error and return None
+        print(f"  Invalid row number '{row_str}'.")
+        return None, None
+
+    # Check the row number is in the valid range
+    if not (1 <= row_num <= 80):
+        print(f"  Row {row_num} is out of range. Must be 1 to 80.")
+        return None, None
+
+    # Convert to 0-based indexes and return them
+    return row_num - 1, COL_TO_INDEX[col_letter]
