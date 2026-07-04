@@ -255,3 +255,95 @@ def book_seat(seat_map, conn=None):
         print(f"  Seat: {seat_label}")
         print(f"  Booking Reference: {ref}")
         print(f"  Passenger: {first_name} {last_name}")
+        
+        
+
+def free_seat(seat_map, conn=None):
+    # This function frees a reserved seat
+    # conn is None in Part A and a database connection in Part B
+
+    # Ask the user which seat to free
+    seat_input = input("\n  Enter seat to free (e.g. 5A, 12D): ").strip()
+
+    # Convert the input to row and column indexes
+    row_index, col_index = parse_seat(seat_input)
+
+    # Stop here if the input was invalid
+    if row_index is None:
+        return
+
+    # Get the current status of that seat
+    status = seat_map[col_index][row_index]
+
+    # Build a readable seat label
+    seat_label = f"{row_index + 1}{INDEX_TO_COL[col_index]}"
+
+    # Check if the seat can be freed
+    if status == "F":
+        print(f"  Seat {seat_label} is already free.")
+        return
+
+    elif status in ("X", "S"):
+        # Cannot free an aisle or storage space
+        print(f"  {seat_label} cannot be freed — it is a {status} space.")
+        return
+
+    # The seat is reserved — status is either "R" (Part A) or a booking reference (Part B)
+    if conn is not None:
+        # Part B: delete the passenger record from the database first
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM bookings WHERE booking_ref = ?", (status,))
+        conn.commit()
+
+    # Reset the seat to free in the seat map
+    seat_map[col_index][row_index] = "F"
+    print(f"  Seat {seat_label} has been successfully freed.")
+
+
+# ============================================================
+# MENU FUNCTIONALITY 4: SHOW BOOKING STATUS
+# ============================================================
+
+def show_booking_status(seat_map):
+    # This function prints the full seat map to the screen
+    # It shows every seat's current status
+
+    print("\n  Seat Map (F=Free, R=Reserved, X=Aisle, S=Storage)")
+    print("  " + "-" * 62)
+    print("       A    B    C    |    D    E    F")
+    print("  " + "-" * 62)
+
+    # Loop through all 80 rows
+    for row in range(80):
+
+        # Create the row number label right-aligned to 3 characters
+        row_label = str(row + 1).rjust(3)
+        row_display = f"  {row_label} |"
+
+        # Loop through all 7 columns
+        for col in range(7):
+            cell = seat_map[col][row]
+
+            if col == 3:
+                # Column 3 is the aisle — show a separator
+                row_display += "  ||"
+            else:
+                # If it is a booking reference, only show the first 3 characters
+                display = cell if cell in ("F", "X", "S", "R") else cell[:3]
+                row_display += f"  {display:<3}"
+
+        print(row_display)
+
+    # Count the total free and reserved seats
+    total_free = sum(
+        1 for col in range(7) for row in range(80)
+        if seat_map[col][row] == "F"
+    )
+    total_reserved = sum(
+        1 for col in range(7) for row in range(80)
+        if seat_map[col][row] not in ("F", "X", "S")
+    )
+
+    # Print the summary
+    print("  " + "-" * 62)
+    print(f"  Free: {total_free}   Reserved: {total_reserved}")
