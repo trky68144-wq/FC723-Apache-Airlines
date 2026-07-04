@@ -70,3 +70,48 @@ def generate_booking_ref(conn):
             return ref
 
         # If count is not 0 the reference already exists — loop again
+        
+       
+def create_seat_map():
+    # This function builds the seat map for the Burak757 aircraft
+    # The map is a 2D list with 7 columns and 80 rows
+
+    # Create an empty list to hold all the columns
+    seat_map = []
+
+    # Define the column labels in order
+    col_labels = ["A", "B", "C", "X", "D", "E", "F"]
+
+    # Loop through each column label
+    for col_index, col_label in enumerate(col_labels):
+
+        # Create an empty list for this column
+        column = []
+
+        # Loop through all 80 rows
+        for row in range(80):
+
+            if col_label == "X":
+                # This is the aisle column — no bookings allowed
+                column.append("X")
+
+            elif col_label in ("D", "E", "F") and row in (76, 77):
+                # Rows 77 and 78 in columns D, E, F are storage areas
+                column.append("S")
+
+            else:
+                # All other seats start as free
+                column.append("F")
+
+        # Add this column to the seat map
+        seat_map.append(column)
+
+    # Return the completed 2D seat map
+    return seat_map
+
+
+# Dictionary to convert a column letter to its index in the seat map
+COL_TO_INDEX = {"A": 0, "B": 1, "C": 2, "X": 3, "D": 4, "E": 5, "F": 6}
+
+# Dictionary to convert an index back to its column letter
+INDEX_TO_COL = {v: k for k, v in COL_TO_INDEX.items()}
